@@ -1,0 +1,27 @@
+from typing import List, Tuple
+
+INDEX_SOURCE: List[Tuple[str, int]] = [
+	("original_path", 256),
+	("title", 128),
+	("author", 64),
+	("album", 48),
+	("filetype", 48),
+	("genre", 48),
+	("description", 32),
+	("text", 16),
+	("ingredients", 8),
+	("method", 8),
+	("date", 8),
+	("organisation", 4),
+	("language", 1),
+	("id", 1),
+	("pages", 1),
+	("size", 1),
+	("duration", 1),
+	("serves", 1),
+	("tag", 1),
+	("track", 1),
+	("disc", 1),
+	("width", 1),
+	("height", 1),
+]
