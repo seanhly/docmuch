@@ -5,6 +5,7 @@ from third_party_modules import dateparser, grobid_tei_xml
 from os.path import exists
 from urllib import request as request
 import subprocess
+from PreIndexFunctions import PreIndexFunctions
 
 
 class PDF(FileType):
@@ -132,9 +133,6 @@ class PDF(FileType):
 				d["address"] = the_address
 		return d
 
-	def author_to_string(a):
-		return PDF.parsed_author_to_string(PDF.author_to_dict(a))
-
 	def citation_to_string(c):
 		s = ""
 		if "book_title" in c:
@@ -145,8 +143,14 @@ class PDF(FileType):
 			if "title" in c:
 				s += c["title"]
 		if "authors" in c:
-			authors = ", ".join([PDF.author_to_string(a) for a in c["authors"]])
-			s += ", " + authors
+			parsed_authors = [
+				PDF.author_to_dict(a)
+				for a in c["authors"]
+			]
+			authors = PreIndexFunctions.parsed_authors_to_strings(
+				parsed_authors, sep=", "
+			)
+			s += ", " + ", ".join(authors)
 		if "journal" in c:
 			s += ", " + c["journal"]
 		if "volume" in c:
