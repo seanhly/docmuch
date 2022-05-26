@@ -55,7 +55,7 @@ def search(query_string, output_mode = OutputMode.TERMINAL):
 		pdf = fields.get("pdf", {}) or {}
 		book = fields.get("book", {}) or {}
 		tex = fields.get("tex", {}) or {}
-		tei = fields.get("tei", {}) or {}
+		tei = pdf.get("tei", {}) or {}
 		music = fields.get("music", {}) or {}
 		if exists(file_annotations_path):
 			with open(file_annotations_path, "r") as f:
@@ -145,7 +145,7 @@ def search(query_string, output_mode = OutputMode.TERMINAL):
 			result = f"{id}"
 		results.append(result)
 	if output_mode == OutputMode.JSON:
-		return JSON.dumps(results, separators=(",", ":"))
+		return JSON.dumps(results)
 	elif output_mode == OutputMode.ID_LIST:
 		return results
 	else:
