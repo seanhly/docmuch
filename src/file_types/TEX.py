@@ -22,7 +22,10 @@ class TEX(FileType):
 			content = f.read().strip()
 			authors = re.findall("\\\\(?:author|signature)\{([^\}]*)\}", content)
 			if authors:
-				tex_info["author"] = re.sub("\\s+", " ", authors[0]).strip()
+				tex_info["author"] = re.split(
+					" *\\\\ *",
+					re.sub("\\s+", " ", authors[0]).strip()
+				)[0]
 			titles = re.findall("\\\\title\{([^\}]*)\}", content)
 			if titles:
 				tex_info["title"] = re.sub("\\s+", " ", titles[0]).strip()

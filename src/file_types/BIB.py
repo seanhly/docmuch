@@ -14,15 +14,26 @@ class BIB(FileType):
 	def get_info(cls, file):
 		bib_info = {}
 		with open(file, "r") as f:
-			content = f.read().strip()
+			content = f.read().strip().replace("\n", " ")
 			for key in BIB_KEYS:
-				pattern = "(^|\n)\s*" + key + "\s*=\s*[{\"'](.*)[}\"']\s*,?\s*(\n|$)"
+				pattern = f"\s{key}\s*=\s*(.*?)" + "\},"
 				items = [
-					matches[1].strip()
-					for matches in re.findall(pattern, content)
+					match.strip()
+					for match in re.findall(pattern, content)
 				]
 				if items:
-					bib_info[key] = "\n".join(items)
+					bib_info[key] = re.sub(
+						"^\s+", "",
+						re.sub(
+							"\s+$", "",
+							re.sub(
+								"(\s|[{}])+",
+								" ",
+								" ".join(items)
+							)
+						)
+					)
+		#print(bib_info)
 		return bib_info
 
 	@classmethod
