@@ -96,7 +96,6 @@ def index(
 					break
 			if sub_info and key in sub_info:
 				del sub_info[key]
-		print(info)
 		doc.set_data(JSON.dumps(info))
 		doc.add_boolean_term(file_id)
 		db.replace_document(file_id, doc)
