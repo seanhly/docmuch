@@ -13,13 +13,13 @@ class JSON:
 		return dumps(obj, **DUMP_ARGS)
 
 	@classmethod
-	def dump(cls, f):
-		return dump(f, **DUMP_ARGS)
+	def dump(cls, obj: Any, fp):
+		return dump(obj, fp, **DUMP_ARGS)
 
 	@classmethod
 	def loads(cls, content: str):
 		return loads(content)
 
 	@classmethod
-	def load(cls, f):
-		return load(f)
+	def load(cls, fp):
+		return load(fp)

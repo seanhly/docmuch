@@ -56,7 +56,8 @@ INVERSE_INDEX_SOURCE_WEIGHTS: List[Tuple[str, int]] = {
 }
 INDEX_SOURCE_WEIGHTS = {
 	key: weight
-	for weight, keys in INVERSE_INDEX_SOURCE_WEIGHTS.items()
+	for weight, keys
+		in INVERSE_INDEX_SOURCE_WEIGHTS.items()
 	for key in keys
 }
 DISCARD_KEY_PATHS_PRE_DATA_STORE = [
@@ -67,4 +68,18 @@ DISCARD_KEY_PATHS_PRE_DATA_STORE = [
 ]
 MAX_SIMULTANEOUS_EXIFTOOL_REQUESTS = 100
 MAX_LIBREOFFICE_ATTEMPTS = 10
+LIBREOFFICE_CMD = '/usr/bin/libreoffice'
 MAX_EXIFTOOL_ATTEMPTS = 10
+EXIFTOOL_CMD = "/usr/bin/exiftool"
+
+PDFINFO_CMD = "/usr/bin/pdfinfo"
+DETEX_CMD = '/usr/bin/detex'
+
+# For the below types, you can use the hash of the file
+# as an ID.
+TYPICALLY_WRITE_ONCE_FILETYPES = {
+	"3GP", "AAC", "AC3", "AVI", "CD", "GIF",
+	"JPEG", "JPG", "M4V", "MID", "MIDI", "MKV",
+	"MOV", "MP3", "MP4", "MPEG", "MPG", "OGG",
+	"PNG", "TIFF", "WAV",
+} 

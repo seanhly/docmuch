@@ -11,9 +11,9 @@ BIB_KEYS = [
 
 class BIB(FileType):
 	@classmethod
-	def get_info(cls, file):
+	def get_info(cls, fa):
 		bib_info = {}
-		with open(file, "r") as f:
+		with open(fa.as_full_typed_file_path(cls), "r") as f:
 			content = f.read().strip().replace("\n", " ")
 			for key in BIB_KEYS:
 				pattern = f"\s{key}\s*=\s*(.*?)" + "\},"

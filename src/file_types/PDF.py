@@ -6,18 +6,16 @@ from os.path import exists
 from urllib import request as request
 import subprocess
 from PreIndexFunctions import PreIndexFunctions
+from constants import PDFINFO_CMD
 
 
 class PDF(FileType):
 	@classmethod
-	def get_info(cls, file):
-		CMD = '/usr/bin/pdfinfo'
-		if not exists(CMD):
-			raise RuntimeError('System command not found: %s' % CMD)
-		if not exists(file):
-			raise RuntimeError('Provided input file not found: %s' % file)
+	def get_info(cls, fa):
 		pdf_info = {}
-		cmd_output = subprocess.check_output([CMD, file])
+		cmd_output = subprocess.check_output([
+			PDFINFO_CMD, fa.as_full_typed_file_path(cls)
+		])
 		output = cmd_output.decode().strip()
 		lines = output.split("\n")
 		i = 0
@@ -41,7 +39,7 @@ class PDF(FileType):
 				pdf_info["keywords"] = value
 			if key == "Subject":
 				pdf_info["subject"] = value
-		tei_info = PDF.to_tei(file)
+		tei_info = cls.to_tei(fa.as_full_typed_file_path(cls))
 		pdf_info["tei"] = (
 			tei_info
 			if tei_info and len(tei_info) > 0
@@ -49,18 +47,16 @@ class PDF(FileType):
 		)
 		return pdf_info
 
-	def to_text(file):
+	@classmethod
+	def to_text(cls, fa):
 		CMD = '/usr/bin/pdftotext'
-		if not exists(CMD):
-			raise RuntimeError('System command not found: %s' % CMD)
-		if not exists(file):
-			raise RuntimeError('Provided input file not found: %s' % file)
 		return subprocess.check_output(
-			[CMD, "-layout", file, "-"],
+			[CMD, "-layout", fa.as_full_typed_file_path(cls), "-"],
 			stderr=subprocess.DEVNULL
 		).decode().strip()
 
-	def to_tei(file):
+	@classmethod
+	def to_tei(cls, file):
 		CMD = '/usr/bin/curl'
 		if not exists(CMD):
 			raise RuntimeError('System command not found: %s' % CMD)
@@ -106,7 +102,8 @@ class PDF(FileType):
 			tei_info = None
 		return tei_info
 
-	def author_to_dict(a):
+	@classmethod
+	def author_to_dict(cls, a):
 		d = dict(
 			name=a.get("full_name", ""),
 		)
@@ -133,7 +130,8 @@ class PDF(FileType):
 				d["address"] = the_address
 		return d
 
-	def citation_to_string(c):
+	@classmethod
+	def citation_to_string(cls, c):
 		s = ""
 		if "book_title" in c:
 			s = c["book_title"]

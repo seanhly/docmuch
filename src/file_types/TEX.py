@@ -1,24 +1,21 @@
-from os.path import exists
 from urllib import request as request
 import subprocess
 import re
 from file_types.FileType import FileType
+from constants import DETEX_CMD
 
 
 class TEX(FileType):
 	@classmethod
-	def to_text(cls, file):
-		CMD = '/usr/bin/detex'
-		if not exists(CMD):
-			raise RuntimeError('System command not found: %s' % CMD)
-		if not exists(file):
-			raise RuntimeError('Provided input file not found: %s' % file)
-		return subprocess.check_output([CMD, file]).decode().strip()
+	def to_text(cls, fa):
+		return subprocess.check_output(
+			[DETEX_CMD, fa.as_full_typed_file_path(cls)]
+		).decode().strip()
 
 	@classmethod
-	def get_info(cls, file):
+	def get_info(cls, fa):
 		tex_info = {}
-		with open(file, "r") as f:
+		with open(fa.as_full_typed_file_path(cls), "r") as f:
 			content = f.read().strip()
 			authors = re.findall("\\\\(?:author|signature)\{([^\}]*)\}", content)
 			if authors:
@@ -29,6 +26,7 @@ class TEX(FileType):
 			titles = re.findall("\\\\title\{([^\}]*)\}", content)
 			if titles:
 				tex_info["title"] = re.sub("\\s+", " ", titles[0]).strip()
+
 		return tex_info
 
 	@classmethod

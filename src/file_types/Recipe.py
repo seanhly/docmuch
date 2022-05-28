@@ -5,8 +5,8 @@ from typing import Dict
 
 class Recipe(FileType):
 	@classmethod
-	def get_info(cls, file):
-		with open(file, "r") as f:
+	def get_info(cls, fa):
+		with open(fa.as_full_typed_file_path(cls), "r") as f:
 			content = f.read().strip()
 			return json.loads(content)
 

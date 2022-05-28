@@ -1,5 +1,5 @@
 from OutputMode import OutputMode
-from actions.search import search
+from actions.Search import Search as search
 from actions.tag_file_id import tag_file_id
 from urllib import request as request
 import re

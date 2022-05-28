@@ -1,27 +1,29 @@
-from os.path import join, exists
+from os.path import join
 from urllib import request as request
 from os import listdir, mkdir
 import subprocess
 from shutil import rmtree
 from file_types.FileType import FileType
 from sys import stderr
-from constants import MAX_LIBREOFFICE_ATTEMPTS
+from constants import MAX_LIBREOFFICE_ATTEMPTS, LIBREOFFICE_CMD
 
 
 class ODT(FileType):
 	@classmethod
-	def to_text(cls, file):
-		CMD = '/usr/bin/libreoffice'
-		if not exists(CMD):
-			raise RuntimeError('System command not found: %s' % CMD)
-		if not exists(file):
-			raise RuntimeError('Provided input file not found: %s' % file)
-		for attempt in range(10):
+	def to_text(cls, fa):
+		for attempt in range(MAX_LIBREOFFICE_ATTEMPTS):
 			try:
 				the_dir = "/tmp/docmuch_odt/"
 				mkdir(the_dir)
 				subprocess.check_output(
-					[CMD, "--convert-to", "txt", "--outdir", the_dir, file],
+					[
+						LIBREOFFICE_CMD,
+						"--convert-to",
+						"txt",
+						"--outdir",
+						the_dir,
+						fa.as_full_typed_file_path(cls)
+					],
 					stderr=subprocess.DEVNULL
 				)
 				for f in listdir(the_dir):

@@ -2,49 +2,39 @@
 import sys
 from urllib import request as request
 from actions.to_html import to_html
-from constants import DB_PATH
-from actions.extract_metadata import extract_metadata
-from OutputMode import OutputMode
-from actions.index import index
-from actions.delete import delete
-from actions.search import search
-from actions.debug import debug
+from actions.Parse import Parse
+from actions.Index import Index
+from actions.Delete import Delete
+from actions.Search import Search
+from actions.Debug import Debug
 from actions.tag import tag
-from Action import Action
+from parse_dynamic_argument import parse_dynamic_argument
 
 
 action = sys.argv[1]
 args = sys.argv[2:]
-if action == "debug":
-	debug(*args)
+arguments = [
+	parse_dynamic_argument(arg, action)
+	for arg in args
+]
+if action == Debug.command():
+	Debug(arguments).execute()
+elif action == Search.command():
+	Search(arguments).execute()
+elif action == Index.command():
+	Index(arguments).execute()
+elif action == Parse.command():
+	Parse(arguments).execute()
+elif action == Parse.command():
+	Delete(arguments).exeute()
+sys.exit(0)
+if False:
+	pass
 elif action == "tag":
 	t, *args = args
 	tag(t, " ".join(args))
-elif action == "search":
-	html = args[0] == "--html"
-	is_json = args[0] == "--json"
-	ids = args[0] == "--ids"
-	if html:
-		search_args = args[1:]
-		output_mode = OutputMode.HTML
-	elif ids:
-		search_args = args[1:]
-		output_mode = OutputMode.IDS
-	elif is_json:
-		search_args = args[1:]
-		output_mode = OutputMode.JSON
-	else:
-		search_args = args
-		output_mode = OutputMode.TERMINAL
-	print(search(" ".join(search_args), output_mode))
-elif action == "index":
-	index(*args)
-elif action == "delete":
-	delete(*args)
-elif action == "extract-metadata":
-	extract_metadata(*args)
 elif action == "to-html":
-	to_html(*args)
+	to_html(arguments)
 
 #if len(args) <= 2:
 #	raise ValueError("insufficient arguments")

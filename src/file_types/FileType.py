@@ -1,9 +1,5 @@
-from abc import ABC
-from os.path import basename, join, exists
-from typing import Set, Dict, Any, List, Tuple
-from constants import FILE_INFO_PATH, FILE_ANNOTATIONS_PATH
-from JSON import JSON
-import re
+from abc import ABC, abstractclassmethod
+from typing import Set, Dict, Any
 
 
 class FileType(ABC):
@@ -16,16 +12,24 @@ class FileType(ABC):
 		return set()
 
 	@classmethod
-	def applies_to_suffix(cls, suffix):
-		suffixes = cls.suffixes()
-		return not suffixes or suffix in suffixes
+	def applies_to_suffix(cls, suffix: str):
+		return cls.applies_to_any_suffix({suffix})
 
 	@classmethod
-	def get_info(cls, file) -> Dict[str, Any]:
+	def applies_to_any_suffix(cls, suffixes: Set[str]):
+		return not cls.suffixes() or not suffixes.isdisjoint(cls.suffixes())
+
+
+	@classmethod
+	def applies_to_fa(cls, fa: "FileLikeArgument"):
+		return cls.applies_to_any_suffix(fa.as_filetypes())
+
+	@abstractclassmethod
+	def get_info(cls, fa: "FileLikeArgument") -> Dict[str, Any]:
 		return {}
 
 	@classmethod
-	def to_text(cls, file) -> str:
+	def to_text(cls, fa: "FileLikeArgument") -> str:
 		raise ValueError("unimplemented function: FileType.to_text(file)")
 
 	@classmethod

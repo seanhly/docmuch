@@ -4,8 +4,8 @@ from typing import Set
 
 class Plaintext(FileType):
 	@classmethod
-	def to_text(cls, file):
-		with open(file, "r") as f:
+	def to_text(cls, fa):
+		with open(fa.as_full_typed_file_path(cls), "r") as f:
 			return f.read()
 
 	@classmethod

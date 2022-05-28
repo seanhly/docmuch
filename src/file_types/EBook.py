@@ -7,15 +7,13 @@ import subprocess
 
 class EBook(FileType):
 	@classmethod
-	def to_text(cls, file):
+	def to_text(cls, fa):
 		CMD = '/usr/bin/ebook-convert'
 		if not exists(CMD):
 			raise RuntimeError('System command not found: %s' % CMD)
-		if not exists(file):
-			raise RuntimeError('Provided input file not found: %s' % file)
 		tmp_txt_file = "/tmp/ebook.txt"
 		subprocess.check_output(
-			[CMD, file, tmp_txt_file],
+			[CMD, fa.as_full_typed_file_path(cls), tmp_txt_file],
 			stderr=subprocess.DEVNULL
 		)
 		with open(tmp_txt_file, "r") as f:
