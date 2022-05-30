@@ -1,19 +1,17 @@
 from actions.Action import Action
-from actions.Parse import get_metadata
-import json
 
 
-class Debug(Action):
+class CopyTitle(Action):
 	@classmethod
 	def command(cls) -> str:
-		return "debug"
+		return "copy-title"
 
 	def recognised_options(self):
 		return set()
 	
 	@classmethod
 	def description(cls):
-		return "debug the file's exif info"
+		return "copy the file's title"
 
 	def arg_options(self):
 		return set()
@@ -25,14 +23,4 @@ class Debug(Action):
 		return []
 	
 	def execute(self) -> None:
-		paths = [
-			path
-			for f in self.file_arguments
-			for path in f.as_full_file_paths()
-		]
-		print(
-			json.dumps(
-				get_metadata(paths),
-				separators=(",", ":"),
-			)
-		)
+		pass

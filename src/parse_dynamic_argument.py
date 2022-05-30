@@ -1,21 +1,24 @@
+from typing import List, Type
+from arguments.Argument import Argument
 from arguments.OtherArgument import OtherArgument
 from arguments.OptionArgument import OptionArgument
 from arguments.PathArgument import PathArgument
 from arguments.IDArgument import IDArgument
 from arguments.IDWithFiletypeArgument import IDWithFiletypeArgument
-from pathlib import Path
-import re
+from arguments.TagArgument import TagArgument
 
 def parse_dynamic_argument(argument: str, action: str):
-    if Path(argument).is_file():
-        parsed_argument = PathArgument(argument, movable=action in {"parse"})
-    elif re.fullmatch("[0-9a-f]{40}", argument):
-        parsed_argument = IDArgument(argument)
-    elif re.fullmatch("[0-9a-f]{40}(\.[a-zA-Z0-9]+)+", argument):
-        parsed_argument = IDWithFiletypeArgument(argument)
-    elif re.fullmatch("--.*", argument):
-        parsed_argument = OptionArgument(argument)
-    else:
-        parsed_argument = OtherArgument(argument)
-
-    return parsed_argument
+	argument_types: List[Type[Argument]] = [
+		PathArgument,
+		IDArgument,
+		IDWithFiletypeArgument,
+		OptionArgument,
+		TagArgument,
+		OtherArgument,
+		IDArgument,
+	]
+	for T in argument_types:
+		if T.fits(argument):
+			print(T)
+			return T(argument, action)
+	return None

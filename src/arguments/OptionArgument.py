@@ -1,11 +1,12 @@
 from typing import Dict, Set
 from arguments.Argument import Argument
+import re
 
 
 class OptionArgument(Argument):
 	option: str
 
-	def __init__(self, option: str) -> None:
+	def __init__(self, option: str, _ = None):
 		# Trim off the leading double-hyphen.
 		self.option = option[2:]
 
@@ -42,3 +43,6 @@ class OptionArgument(Argument):
 
 		return current_index
 			
+	@classmethod
+	def fits(cls, s: str) -> bool:
+		return re.fullmatch("--.*", s)

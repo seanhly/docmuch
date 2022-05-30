@@ -7,7 +7,9 @@ from actions.Index import Index
 from actions.Delete import Delete
 from actions.Search import Search
 from actions.Debug import Debug
-from actions.tag import tag
+from actions.Open import Open
+from actions.Which import Which
+from actions.Tag import Tag
 from parse_dynamic_argument import parse_dynamic_argument
 
 
@@ -27,12 +29,15 @@ elif action == Parse.command():
 	Parse(arguments).execute()
 elif action == Parse.command():
 	Delete(arguments).exeute()
+elif action == Open.command():
+	Open(arguments).execute()
+elif action == Which.command():
+	Which(arguments).execute()
+elif action == Tag.command():
+	Tag(arguments).execute()
 sys.exit(0)
 if False:
 	pass
-elif action == "tag":
-	t, *args = args
-	tag(t, " ".join(args))
 elif action == "to-html":
 	to_html(arguments)
 

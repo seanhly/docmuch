@@ -1,7 +1,6 @@
 from abc import ABC, abstractclassmethod
 from typing import Set, Dict, Any
 
-
 class FileType(ABC):
 	@classmethod
 	def key(cls) -> str:
@@ -55,3 +54,50 @@ class FileType(ABC):
 		return {
 			"tei"
 		}
+	
+	@classmethod
+	def actions(cls):
+		from actions.Open import Open
+		from actions.Tag import Tag
+		from actions.EditNote import EditNote
+		from actions.Print import Print
+		from actions.Annotate import Annotate
+		from actions.CopyID import CopyID
+		from actions.CopyTitle import CopyTitle
+		from actions.CopyAuthors import CopyAuthors
+		from actions.Untag import Untag
+		from actions.Index import Index
+		return [
+			Open,
+			Tag,
+			EditNote,
+			Print,
+			Annotate,
+			CopyID,
+			CopyTitle,
+			CopyAuthors,
+			Untag,
+			Index,
+		]
+	
+	@classmethod
+	def for_suffix(cls, suffix: str):
+		from file_types.BIB import BIB
+		from file_types.EBook import EBook
+		from file_types.FileType import FileType
+		from file_types.Image import Image
+		from file_types.ODT import ODT
+		from file_types.PDF import PDF
+		from file_types.Plaintext import Plaintext
+		from file_types.Recipe import Recipe
+		from file_types.Song import Song
+		from file_types.TEX import TEX
+		all_filetypes = (
+			BIB, EBook, FileType, Image, ODT, PDF, Plaintext, Recipe, Song, TEX,
+		)
+		for ft in all_filetypes:
+			for suffix in ft.suffixes():
+				if suffix == suffix:
+					return ft
+
+		return None

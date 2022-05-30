@@ -2,29 +2,28 @@ from arguments.FileLikeArgument import FileLikeArgument
 from os.path import join, exists, realpath
 from os import environ
 from os import listdir
-
-from file_types.FileType import FileType
+import re
 
 
 class IDArgument(FileLikeArgument):
 	id: str
 
-	def __init__(self, id: str):
+	def __init__(self, id: str, _ = None):
 		self.id = id
 
 	def __str__(self):
 		return self.id
 
 	def as_full_file_paths(self):
-		files_path = join(
+		path = realpath(join(
 			environ.get("HOME"),
 			"Documents",
 			"Files",
-		)
+		))
 		return {
-			join(files_path, f)
-			for f in listdir(files_path)
-			if f[:40] == self.id
+			join(path, f)
+			for f in listdir(path)
+			if f[:40] == self.as_id()
 		}
 	
 	def as_full_typed_file_path(self, ft):
@@ -32,32 +31,43 @@ class IDArgument(FileLikeArgument):
 			return list(self.as_full_file_paths())[0]
 		else:
 			for suffix in ft.suffixes():
-				full_path = join(
+				full_path = realpath(join(
 					environ.get("HOME"),
 					"Documents",
 					"Files",
-					f"{self.id}.{suffix}"
-				)
+					f"{self.as_id()}.{suffix}"
+				))
 				if exists(full_path):
 					return realpath(full_path)
 		return None
 
 	def as_full_metadata_path(self):
-		path = join(
+		dir = realpath(join(
 			environ.get("HOME"),
 			"Documents",
 			"FileInfo",
-			f"{self.id}.json"
-		)
-		return realpath(path) if exists(path) else path
+		))
+		return join(dir, f"{self.as_id()}.json")
 
 	def as_full_annotations_path(self):
-		return join(
+		dir = realpath(join(
 			environ.get("HOME"),
 			"Documents",
 			"FileAnnotations",
-			f"{self.id}.json"
-		)
+		))
+		return join(dir, f"{self.as_id()}.json")
+
+	def as_full_file_note_path(self):
+		dir = realpath(join(
+			environ.get("HOME"),
+			"Documents",
+			"Notes",
+		))
+		return join(dir, f"{self.as_id()}.MD")
 	
 	def as_id(self):
 		return self.id
+	
+	@classmethod
+	def fits(cls, s: str) -> bool:
+		return re.fullmatch("[0-9a-f]{40}", s)

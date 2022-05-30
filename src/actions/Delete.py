@@ -11,6 +11,10 @@ class Delete(Action):
 	def command(cls) -> str:
 		return "delete"
 
+	@classmethod
+	def description(cls):
+		return "delete the file and all its related metadata"
+
 	def recognised_options(self):
 		return set()
 

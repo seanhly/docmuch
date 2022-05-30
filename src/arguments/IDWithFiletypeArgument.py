@@ -2,6 +2,7 @@ from genericpath import exists
 from arguments.FileLikeArgument import FileLikeArgument
 from os.path import join, realpath
 from os import environ
+import re
 
 
 class IDWithFiletypeArgument(FileLikeArgument):
@@ -24,7 +25,7 @@ class IDWithFiletypeArgument(FileLikeArgument):
 			"Files",
 			f"{self.id}.{self.ft}"
 		)
-		return realpath(path) if exists(path) else path
+		return {realpath(path) if exists(path) else path}
 
 	def as_full_metadata_path(self):
 		path = join(
@@ -44,8 +45,20 @@ class IDWithFiletypeArgument(FileLikeArgument):
 		)
 		return realpath(path) if exists(path) else path
 
+	def as_full_file_note_path(self):
+		notes_dir = realpath(join(
+			environ.get("HOME"),
+			"Documents",
+			"Notes",
+		))
+		return join(notes_dir, f"{self.id}.MD")
+
 	def as_id(self):
 		return self.id
 
 	def as_filetypes(self):
 		return {self.ft}
+
+	@classmethod
+	def fits(cls, s: str) -> bool:
+		return re.fullmatch("[0-9a-f]{40}(\.[a-zA-Z0-9]+)+", s)

@@ -19,6 +19,10 @@ class Index(Action):
 	def command(cls) -> str:
 		return "index"
 
+	@classmethod
+	def description(cls):
+		return "index the file"
+
 	def recognised_options(self):
 		return {"all"}
 
@@ -43,16 +47,16 @@ class Index(Action):
 		db = xapian.WritableDatabase(DB_PATH, xapian.DB_CREATE_OR_OPEN)
 		term_generator = xapian.TermGenerator()
 		term_generator.set_stemmer(xapian.Stem("en"))
-		for file_argument in self.file_arguments:
-			file_info_path = file_argument.as_full_metadata_path()
-			file_annotations_path = file_argument.as_full_annotations_path()
+		for fa in self.file_arguments:
+			file_info_path = fa.as_full_metadata_path()
+			file_annotations_path = fa.as_full_annotations_path()
 			with open(file_info_path, "r") as f:
 				info = JSON.load(f)
 			if exists(file_annotations_path):
 				with open(file_annotations_path, "r") as f:
 					info["annotations"] = JSON.load(f)
-			info["file"]["id"] = file_argument.as_id()
-			info["file"]["type"] = sorted(file_argument.as_filetypes())
+			info["file"]["id"] = fa.as_id()
+			info["file"]["type"] = sorted(fa.as_filetypes())
 			index_source_data: Dict[str, List[str]] = {}
 			for key, paths in index_source_metadata.items():
 				for path in paths:
@@ -103,6 +107,6 @@ class Index(Action):
 						break
 				if sub_info and key in sub_info:
 					del sub_info[key]
-			doc.set_data(file_argument.as_id())
-			doc.add_boolean_term(file_argument.as_id())
-			db.replace_document(file_argument.as_id(), doc)
+			doc.set_data(fa.as_id())
+			doc.add_boolean_term(fa.as_id())
+			db.replace_document(fa.as_id(), doc)

@@ -62,6 +62,10 @@ class Parse(Action):
 	def command(cls) -> str:
 		return "parse"
 
+	@classmethod
+	def description(cls):
+		return "parse the file for associated metadata"
+
 	def recognised_options(self):
 		return {"all"}
 
@@ -180,11 +184,10 @@ class Parse(Action):
 					stderr.write(f"exiftool failure on attempt {attempt}\n")
 			for result in results:
 				fa = PathArgument(result["SourceFile"])
+				print(str(fa))
 				for t in (FileType, *SUPPORTED_FILE_TYPES):
 					if t.applies_to_any_suffix(fa.as_filetypes()):
 						for nk in t.non_keys():
-							print(type(fa))
-							print(str(fa))
 							if nk in file_infos[fa.as_id()][1]:
 								del file_infos[fa.as_id()][1][nk]
 								modified.add(fa.as_id())

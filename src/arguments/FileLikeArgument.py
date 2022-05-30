@@ -1,8 +1,8 @@
 from abc import abstractmethod
+from os import environ, listdir
 from typing import Optional, Set, Type
 from arguments.Argument import Argument
-from os.path import basename
-
+from os.path import basename, join, realpath
 from file_types.FileType import FileType
 
 
@@ -27,6 +27,10 @@ class FileLikeArgument(Argument):
 		return None
 
 	@abstractmethod
+	def as_full_file_note_path(self) -> Optional[str]:
+		return None
+
+	@abstractmethod
 	def as_id(self):
 		pass
 
@@ -42,3 +46,24 @@ class FileLikeArgument(Argument):
 				filetypes.add(split_basename[1].upper())
 
 		return filetypes
+
+	def shortest_id_prefix(self):
+		files_dir = realpath(join(
+			environ.get("HOME"),
+			"Documents",
+			"Files",
+		))
+		the_id = self.as_id()
+		shortest_prefix_length = 0
+		from arguments.IDWithFiletypeArgument import IDWithFiletypeArgument
+		for f in listdir(files_dir):
+			if IDWithFiletypeArgument.fits(f):
+				other_id = f.split(".", 1)[0]
+				if the_id != other_id:
+					prefix_overlap = 0
+					while other_id[prefix_overlap] == the_id[prefix_overlap]:
+						prefix_overlap += 1
+					if prefix_overlap >= shortest_prefix_length:
+						shortest_prefix_length = prefix_overlap + 1
+
+		return the_id[:shortest_prefix_length]
