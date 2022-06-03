@@ -8,7 +8,6 @@ from arguments.FileLikeArgument import FileLikeArgument
 from arguments.IDArgument import IDArgument
 from arguments.IDPrefixArgument import IDPrefixArgument
 from arguments.IDWithFiletypeArgument import IDWithFiletypeArgument
-from arguments.OtherArgument import OtherArgument
 from constants import (
 	DB_PATH,
 	END,
@@ -18,6 +17,7 @@ from constants import (
 	SEARCH_LOG_PATH,
 	WHITE,
 	YELLOW,
+	LIGHT_CYAN,
 )
 from file_types.FileType import FileType
 from third_party_modules import xapian
@@ -78,10 +78,15 @@ class Search(Action):
 			while prematurely_stop_listing.returncode is None:
 				prematurely_stop_listing.poll()
 			files = prematurely_stop_listing.stdout.read().decode("utf8").strip().split("\n")
-			matching_files_and_weights = [
-				(score, IDWithFiletypeArgument(f))
-				for score, f in enumerate(reversed(files), start=1)
-			]
+			seen: Set[str] = set()
+			matching_files_and_weights: List[Tuple[float, IDArgument]] = []
+			for score, f in enumerate(reversed(files), start=1):
+				file_id = IDWithFiletypeArgument(f).as_id()
+				if file_id not in seen:
+					seen.add(file_id)
+					matching_files_and_weights.append(
+						(score, IDArgument(file_id))
+					)
 		else:
 			db = xapian.Database(DB_PATH)
 			timestamp = datetime.now().timestamp()
@@ -135,10 +140,10 @@ class Search(Action):
 				)
 			),
 			(
-				self.choose_action,
-				lambda q, action: (
+				self.choose_actions,
+				lambda q, chosen_actions: (
 					BreadcrumbDirection.FORWARD
-					if action
+					if chosen_actions
 					else (
 						BreadcrumbDirection.REMAIN
 						if q
@@ -147,7 +152,7 @@ class Search(Action):
 				)
 			),
 			(
-				self.execute_action,
+				self.execute_actions,
 				lambda _: BreadcrumbDirection.FORWARD
 			)
 		]
@@ -189,8 +194,9 @@ class Search(Action):
 			elif next_step == BreadcrumbDirection.REMAIN:
 				queries[i] = ""
 
-	def execute_action(self, query, action: Type[Action]):
-		action.execute()
+	def execute_actions(self, query, chosen_actions: List[Type[Action]]):
+		for a in chosen_actions:
+			a.execute()
 		return query, {}
 
 	def select_files(self, query, matching_files_and_weights: List[Tuple[float, FileLikeArgument]]):
@@ -217,7 +223,14 @@ class Search(Action):
 			if len(tei_authors) == 1:
 				tei_author = tei_authors[0]
 			elif len(tei_authors) > 1:
-				tei_author = tei_authors[0] + " et. al."
+				tei_author = tei_authors[0] + " et al."
+			else:
+				tei_author = None
+			bib_author = bib.get("author")
+			if bib_author and len(bib_author) > 34:
+				bib_authors = re.split("(, | and )", bib_author, 1)
+				if len(bib_authors) > 1:
+					bib_author = f"{bib_authors[0]} et al."
 			else:
 				tei_author = None
 			title = tuple(
@@ -246,7 +259,7 @@ class Search(Action):
 				for f in (
 					annotations.get("creators"),
 					tei_author,
-					bib.get("author"),
+					bib_author,
 					file.get("creator-file-as"),
 					file.get("creator"),
 					file.get("creator-file-as"),
@@ -275,37 +288,40 @@ class Search(Action):
 						split_authors = re.split(" *[,;] *", authors[i])
 						if len(split_authors) > 1 and len(split_authors[0]) > 5:
 							authors[i] = f"{split_authors[0]} et al."
-			result = f"{RED}{fa.shortest_id_prefix()}{END}\t"
+			result = f"{RED}{fa.shortest_id_prefix().ljust(7, ' ')}{END}"
 			if pages:
 				likely_page_count = pages[0]
 				page_count_string = f"{likely_page_count}p"
-				result += f"{GREEN}{page_count_string.ljust(5)}{END} "
+				result += f"{GREEN}{page_count_string.ljust(6, ' ')}{END}"
 			else:
 				result += f"      "
 			filetypes = " ".join(sorted(fa.as_filetypes()))
 			result += f"{GREEN}{filetypes}{END} "
 			if authors:
 				result += f"{YELLOW}[{authors[0]}]{END} "
+			tags =annotations.get('tags', [])
+			if tags:
+				result +=  f"{LIGHT_CYAN}({' '.join(tags)}){END} "
 			result += f"{WHITE}{title}{END}"
 			display_results.append(result)
-		fzf_search = subprocess.Popen(
-			[
-				"fzf",
-				"--print-query",
-				"--multi",
-				"--exact",
-				"--no-mouse",
-				"--ansi",
-			],
-			stdin=subprocess.PIPE,
-			stdout=subprocess.PIPE,
-		)
-		for r in display_results:
-			fzf_search.stdin.write(bytes(f"{r}\n", encoding="utf8"))
-		fzf_search.stdin.close()
-		while fzf_search.returncode is None:
-			fzf_search.poll()
-		fzf_output = fzf_search.stdout.read().decode("utf8").split("\n", 1)
+		with open("/tmp/log", "w") as f:
+			fzf_search = subprocess.Popen(
+				[
+					"fzf",
+					"--print-query",
+					"--multi",
+					"--exact",
+					"--no-mouse",
+					"--ansi",
+				],
+				stdin=subprocess.PIPE,
+				stdout=subprocess.PIPE,
+			)
+			for r in display_results:
+				fzf_search.stdin.write(bytes(f"{r}\n", encoding="utf8"))
+			fzf_search.stdin.close()
+			fzf_search.wait()
+			fzf_output = fzf_search.stdout.read().decode("utf8").split("\n", 1)
 		if len(fzf_output) == 2:
 			potential_next_query, selected_lines_str = fzf_output
 			if potential_next_query:
@@ -326,7 +342,7 @@ class Search(Action):
 		
 		return query, dict(chosen_files=chosen_files)
 
-	def choose_action(
+	def choose_actions(
 		self,
 		query: str,
 		chosen_files: List[FileLikeArgument],
@@ -341,14 +357,15 @@ class Search(Action):
 			FileType.for_suffix(suffix).actions()
 			for suffix in suffixes
 		]:
-			for action in action_group:
-				if action not in seen_actions:
-					seen_actions.add(action)
-					available_actions_for_files.append(action)
+			for actions in action_group:
+				if actions not in seen_actions:
+					seen_actions.add(actions)
+					available_actions_for_files.append(actions)
 		fzf_search = subprocess.Popen(
 			[
 				"fzf",
 				"--print-query",
+				"--multi",
 				"--exact",
 				"--no-mouse",
 				f"--prompt={len(chosen_files)} file(s) selected > ",
@@ -357,27 +374,32 @@ class Search(Action):
 			stdin=subprocess.PIPE,
 			stdout=subprocess.PIPE,
 		)
-		for action in available_actions_for_files:
+		for actions in available_actions_for_files:
 			fzf_search.stdin.write(
-				bytes(f"{action.to_string()}\n", encoding="utf8")
+				bytes(f"{actions.to_string()}\n", encoding="utf8")
 			)
 		fzf_search.stdin.close()
-		while fzf_search.returncode is None:
-			fzf_search.poll()
+		fzf_search.wait()
 		fzf_output = fzf_search.stdout.read().decode("utf8").split("\n", 1)
 		if len(fzf_output) == 0:
-			action = None
+			chosen_actions = None
 			query = ""
 		if len(fzf_output) == 1:
-			action = None
+			chosen_actions = None
 			query = fzf_output[0].strip()
 		else:
-			query, selected_action_string = fzf_output
-			if selected_action_string:
-				name = selected_action_string.strip().split(" (")[0]
-				ChosenAction = Action.for_name(name)
-				action = ChosenAction(chosen_files)
+			query, chosen_action_lines = fzf_output
+			chosen_action_lines = chosen_action_lines.strip()
+			if chosen_action_lines:
+				names = [
+					a.split(" (")[0]
+					for a in chosen_action_lines.split("\n")
+				]
+				chosen_actions = [
+					Action.for_name(name)(chosen_files)
+					for name in names
+				]
 			else:
-				action = None
+				chosen_actions = None
 
-		return query, dict(action=action)
+		return query, dict(chosen_actions=chosen_actions)

@@ -1,75 +1,42 @@
 #!/usr/bin/python3
+import subprocess
 import sys
+from typing import Optional, Type
 from urllib import request as request
-from actions.to_html import to_html
-from actions.Parse import Parse
-from actions.Index import Index
-from actions.Delete import Delete
-from actions.Search import Search
-from actions.Debug import Debug
-from actions.Open import Open
-from actions.Which import Which
-from actions.Tag import Tag
 from parse_dynamic_argument import parse_dynamic_argument
+from os import environ
+from actions import Action
 
-
-action = sys.argv[1]
-args = sys.argv[2:]
-arguments = [
-	parse_dynamic_argument(arg, action)
-	for arg in args
-]
-if action == Debug.command():
-	Debug(arguments).execute()
-elif action == Search.command():
-	Search(arguments).execute()
-elif action == Index.command():
-	Index(arguments).execute()
-elif action == Parse.command():
-	Parse(arguments).execute()
-elif action == Parse.command():
-	Delete(arguments).exeute()
-elif action == Open.command():
-	Open(arguments).execute()
-elif action == Which.command():
-	Which(arguments).execute()
-elif action == Tag.command():
-	Tag(arguments).execute()
-sys.exit(0)
-if False:
-	pass
-elif action == "to-html":
-	to_html(arguments)
-
-#if len(args) <= 2:
-#	raise ValueError("insufficient arguments")
-"""
-Action(
-	cmd="to-html",
-	min_args=1,
-	fn=to_html,
-)
-Action(
-	cmd="extract-metadata",
-	min_args=0,
-	fn=extract_metadata,
-)
-Action(
-	cmd="index",
-	min_args=0,
-	fn=index,
-)
-Action(
-	cmd="debug",
-	min_args=0,
-	fn=debug,
-)
-Action(
-	cmd="search",
-	min_args=0,
-	fn=index,
-	plain_args=[
-		("html", "json", "ids"),
+if "TMUX" not in environ:
+	# I have plans to make the script run from a TMUX session permanently (as a
+	# server), in order to remove the Python startup time at the begin of each
+	# commandline usage.
+	tmux = subprocess.Popen(
+		[
+			"/usr/bin/tmux",
+			"new-session",
+			"-s",
+			"docmuch",
+			' '.join(sys.argv),
+		]
+	)
+	tmux.wait()
+else:
+	action = sys.argv[1]
+	args = sys.argv[2:]
+	arguments = [
+		parse_dynamic_argument(arg, action)
+		for arg in args
 	]
-)
-"""
+	FoundAction: Optional[Type[Action]] = None
+	for T in Action.__subclasses__():
+		if action == T.command():
+			FoundAction = T
+			break
+	if FoundAction:
+		FoundAction(arguments).execute()
+		exit_code = 0
+	else:
+		sys.stderr.write(f"unknown sub-command: {action}\n")
+		exit_code = 1
+	sys.exit(exit_code)

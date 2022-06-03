@@ -1,3 +1,4 @@
+import os
 from actions.Action import Action
 from os.path import exists
 import subprocess
@@ -34,7 +35,12 @@ class Annotate(Action):
 						title=None,
 						creators=None,
 					), f)
-			subprocess.call(
-				["/usr/bin/gvim", metadata_path],
-				stderr=subprocess.DEVNULL
+			arguments = ["nohup", "/usr/bin/gvim", metadata_path, "&"]
+			print(" ".join(arguments))
+			subprocess.Popen(
+				" ".join(arguments),
+				stderr=subprocess.DEVNULL,
+				shell=True,
+				preexec_fn=os.setpgrp
 			)
+

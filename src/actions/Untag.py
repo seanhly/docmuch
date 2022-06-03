@@ -1,6 +1,6 @@
 from JSON import JSON
 from actions.Action import Action
-from arguments.TagArgument import TagArgument
+from actions.Tag import Tag
 from os.path import exists
 from urllib import request as request
 
@@ -29,6 +29,7 @@ class Untag(Action):
 		return []
 	
 	def execute(self):
+		self.tag = Tag.read_tag()
 		if self.file_arguments:
 			for fa in self.file_arguments:
 				modified = False

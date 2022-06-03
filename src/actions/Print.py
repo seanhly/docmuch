@@ -1,6 +1,8 @@
 from actions.Action import Action
 #from os.path import exists
-#import subprocess
+import subprocess
+
+from file_types.PDF import PDF
 
 
 class Print(Action):
@@ -25,6 +27,13 @@ class Print(Action):
 		return []
 	
 	def execute(self) -> None:
-		raise ValueError("""
-			Printing things via docmuch is not yet supported.
-		""")
+		for fa in self.file_arguments:
+			lp = subprocess.Popen(
+				[
+					"/usr/bin/lp",
+					"-n",
+					str(1),
+					fa.as_full_typed_file_path(PDF),
+				]
+			)
+			lp.wait()

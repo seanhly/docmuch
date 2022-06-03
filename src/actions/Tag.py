@@ -1,15 +1,16 @@
 from os.path import realpath, join
 import subprocess
-from os import environ
+from os import environ, listdir
+from typing import Dict
 from JSON import JSON
 from actions.Action import Action
-from arguments.TagArgument import TagArgument
+from actions.Index import Index
 from os.path import exists
 from urllib import request as request
 
 
 class Tag(Action):
-	tag: TagArgument = None
+	tag: "TagArgument" = None
 
 	@classmethod
 	def command(cls) -> str:
@@ -31,40 +32,67 @@ class Tag(Action):
 	def blocking_options(self):
 		return []
 	
-	def execute(self):
-		if not self.tag:
-			tags_path = realpath(join(
-				environ.get("HOME"),
-				"Documents",
-				"tags.tsv",
-			))
-			with open(tags_path, "r") as f:
-				tags = [l.strip().split("\t") for l in f.read().strip().split("\n")]
-			self.tag = TagArgument()
-			fzf_search = subprocess.Popen(
+	@staticmethod
+	def read_tag():
+		annotations_dir = realpath(join(
+			environ.get("HOME"),
+			"Documents",
+			"FileAnnotations"
+		))
+		tags_path = realpath(join(
+			environ.get("HOME"),
+			"Documents",
+			"tags.tsv"
+		))
+		tags: Dict[str, int] = {}
+		for f in listdir(annotations_dir):
+			an_annotation_for_a_file = join(annotations_dir, f)
+			with open(an_annotation_for_a_file, "r") as f:
+				j = JSON.load(f)
+				for t in j.get("tags", []):
+					tags[t] = tags.get(t, 0) + 1
+		with open(tags_path, "r") as f:
+			described_tags = dict(
 				[
-					"fzf",
-					"--print-query",
-					"--exact",
-					"--no-mouse",
-				],
-				stdin=subprocess.PIPE,
-				stdout=subprocess.PIPE,
+					l.strip().split("\t")
+					for l in f.read().strip().split("\n")
+				]
 			)
-			for name, description in tags:
-				fzf_search.stdin.write(
-					bytes(f"{name}\t{description}\n", encoding="utf8")
-				)
-			fzf_search.stdin.close()
-			while fzf_search.returncode is None:
-				fzf_search.poll()
-			tag_and_query = fzf_search.stdout.read().decode("utf8").strip().split("\n", 1)
-			self.tag.name = (
-				tag_and_query[1].split("\t")[0].strip()
-				if len(tag_and_query) == 2
-				else tag_and_query[0].strip()
+		tags_by_counts = sorted([
+			"\t".join(
+				str(i)
+				for i in (c, t, described_tags.get(t))
+				if i
 			)
-			self.tag.polarity = True
+			for t, c in tags.items()
+		])
+		fzf_search = subprocess.Popen(
+			[
+				"fzf",
+				"--print-query",
+				"--exact",
+				"--no-mouse",
+			],
+			stdin=subprocess.PIPE,
+			stdout=subprocess.PIPE,
+		)
+		for line in tags_by_counts:
+			fzf_search.stdin.write(
+				bytes(f"{line}\n", encoding="utf8")
+			)
+		fzf_search.stdin.close()
+		fzf_search.wait()
+		selection = fzf_search.stdout.read().decode("utf8").strip().split("\n", 1)
+		if len(selection) == 2:
+			tag = selection[-1].strip().split("\t")[1]
+		else:
+			tag = selection[-1].strip()
+		
+		return tag
+	
+	def execute(self):
+		from arguments.TagArgument import TagArgument
+		self.tag = TagArgument(Tag.read_tag(), True)
 		if self.file_arguments:
 			for fa in self.file_arguments:
 				modified = False
@@ -90,6 +118,7 @@ class Tag(Action):
 					JSON.dump(file_annotations, f)
 				if modified:
 					print(fa.as_id())
+			Index(self.file_arguments).execute()
 		else:
 			raise ValueError("""
 				Tagging things by search is not yet supported, because Seán

@@ -1,8 +1,9 @@
 from abc import abstractmethod
 from os import environ, listdir
-from typing import Optional, Set, Type
+from typing import Set, Type
 from arguments.Argument import Argument
 from os.path import basename, join, realpath
+import re
 from file_types.FileType import FileType
 
 
@@ -18,17 +19,31 @@ class FileLikeArgument(Argument):
 			else None
 		)
 
-	@abstractmethod
-	def as_full_metadata_path(self) -> Optional[str]:
-		return None
+	def as_full_metadata_path(self) -> str:
+		metadata_dir = realpath(join(
+			environ.get("HOME"),
+			"Documents",
+			"FileInfo",
+		))
 
-	@abstractmethod
-	def as_full_annotations_path(self) -> Optional[str]:
-		return None
+		return join(metadata_dir, f"{self.as_id()}.json")
+	
+	def as_full_annotations_path(self):
+		annotations_dir = realpath(join(
+			environ.get("HOME"),
+			"Documents",
+			"FileAnnotations",
+		))
 
-	@abstractmethod
-	def as_full_file_note_path(self) -> Optional[str]:
-		return None
+		return join(annotations_dir, f"{self.as_id()}.json")
+	
+	def as_full_file_note_path(self):
+		notes_dir = realpath(join(
+			environ.get("HOME"),
+			"Documents",
+			"Notes",
+		))
+		return join(notes_dir, f"{self.as_id()}.MD")
 
 	@abstractmethod
 	def as_id(self):
@@ -41,7 +56,10 @@ class FileLikeArgument(Argument):
 	def as_filetypes(self):
 		filetypes = set()
 		for path in self.as_full_file_paths():
-			split_basename = basename(path).split(".", 1)
+			split_basename = re.split(
+				FileType.valid_suffix_pattern(),
+				basename(path).upper(),
+			)
 			if len(split_basename) == 2:
 				filetypes.add(split_basename[1].upper())
 
@@ -58,7 +76,7 @@ class FileLikeArgument(Argument):
 		from arguments.IDWithFiletypeArgument import IDWithFiletypeArgument
 		for f in listdir(files_dir):
 			if IDWithFiletypeArgument.fits(f):
-				other_id = f.split(".", 1)[0]
+				other_id = f.split(".")[0]
 				if the_id != other_id:
 					prefix_overlap = 0
 					while other_id[prefix_overlap] == the_id[prefix_overlap]:

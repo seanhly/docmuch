@@ -25,53 +25,18 @@ class PathArgument(FileLikeArgument):
 	def as_full_file_paths(self) -> Set[str]:
 		return {realpath(self.path)}
 
-	def as_full_metadata_path(self) -> str:
-		path = realpath(self.path)
-		files_path = realpath(join(environ.get("HOME"), "Documents", "Files"))
-		file_info_path = realpath(join(environ.get("HOME"), "Documents", "FileInfo"))
-		if self.movable:
-			file_id = self.as_id()
-			metadata_path = join(file_info_path, f"{file_id}.json")
-		else:
-			metadata_match = re.fullmatch(f"{file_info_path}/([0-9a-f]{{40}}).json", path)
-			if metadata_match:
-				metadata_path = path
-			else:
-				in_system_files_match = re.fullmatch(
-					f"{files_path}/([0-9a-f]{{40}})(\.[a-zA-Z0-9]+)+", path
-				)
-				if in_system_files_match:
-					metadata_path = f"{file_info_path}/{in_system_files_match[1]}.json"
-				else:
-					metadata_path = None
+	def as_full_file_destination(self):
+		files_dir = realpath(join(
+			environ.get("HOME"),
+			"Documents",
+			"Files",
+		))
 
-		return metadata_path
+		return join(
+			files_dir,
+			f"{self.as_id()}.{list(self.as_filetypes())[0]}"
+		)
 
-	def as_full_annotations_path(self):
-		path = realpath(self.path)
-		files_path = realpath(join(environ.get("HOME"), "Documents", "Files"))
-		file_info_path = realpath(join(environ.get("HOME"), "Documents", "FileInfo"))
-		file_annotations_path = realpath(join(environ.get("HOME"), "Documents", "FileAnnotations"))
-		metadata_match = re.fullmatch(f"{file_info_path}/([0-9a-f]{{40}}).json", path)
-		if metadata_match:
-			annotations_path = f"{file_annotations_path}/{metadata_match[1]}.json"
-		else:
-			in_system_files_match = re.fullmatch(
-				f"{files_path}/([0-9a-f]{{40}})(\.[a-zA-Z0-9]+)+", path
-			)
-			if in_system_files_match:
-				annotations_path = f"{file_annotations_path}/{in_system_files_match[1]}.json"
-			else:
-				annotations_match = re.fullmatch(
-					f"{file_annotations_path}/([0-9a-f]{{40}}).json", path
-				)
-				if annotations_match:
-					annotations_path = path
-				else:
-					annotations_path = None
-
-		return annotations_path
-	
 	def needs_moving(self):
 		id_like_strings = re.findall("[0-9a-f]{40}", self.path)
 		if len(id_like_strings) == 1:
@@ -87,7 +52,10 @@ class PathArgument(FileLikeArgument):
 
 		return True
 
+	the_id = None
 	def as_id(self) -> str:
+		if self.the_id:
+			return self.the_id
 		id_like_strings = re.findall("[0-9a-f]{40}", self.path)
 		the_id = None
 		if len(id_like_strings) == 1:
@@ -121,15 +89,8 @@ class PathArgument(FileLikeArgument):
 				"""
 				the_id = secrets.token_hex(20)
 
+		self.the_id = the_id
 		return the_id
-
-	def as_full_file_note_path(self):
-		notes_dir = realpath(join(
-			environ.get("HOME"),
-			"Documents",
-			"Notes",
-		))
-		return join(notes_dir, f"{self.as_id()}.MD")
 
 	@classmethod
 	def fits(cls, s: str) -> bool:

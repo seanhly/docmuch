@@ -1,10 +1,10 @@
-from os import environ, listdir
+from os import rename, environ, listdir
 from os.path import join
 from JSON import JSON
 from actions.Action import Action
-from arguments.FileLikeArgument import FileLikeArgument
 from arguments.IDArgument import IDArgument
 from arguments.PathArgument import PathArgument
+from arguments.FileLikeArgument import FileLikeArgument
 from file_types.BIB import BIB
 from file_types.EBook import EBook
 from file_types.FileType import FileType
@@ -67,7 +67,7 @@ class Parse(Action):
 		return "parse the file for associated metadata"
 
 	def recognised_options(self):
-		return {"all"}
+		return {"all", "hard"}
 
 	def arg_options(self):
 		return set()
@@ -81,13 +81,15 @@ class Parse(Action):
 	def execute(self) -> None:
 		if "all" in self.options:
 			self.file_arguments = [
-				IDArgument(f.split(".", 1)[0])
+				IDArgument(f.split(".")[0])
 				for f in listdir(join(environ['HOME'], "Documents", "Files"))
 			]
 		previous_metadata: List[FileLikeArgument] = []
 		no_metadata: List[FileLikeArgument] = []
+		path_arguments: List[PathArgument] = []
 		for fa in self.file_arguments:
-			print(str(fa.as_id()))
+			if type(fa) == PathArgument:
+				path_arguments.append(fa)
 			(
 				previous_metadata
 				if exists(fa.as_full_metadata_path())
@@ -152,39 +154,44 @@ class Parse(Action):
 		while tail_files:
 			head_files = tail_files[:MAX_SIMULTANEOUS_EXIFTOOL_REQUESTS]
 			tail_files = tail_files[MAX_SIMULTANEOUS_EXIFTOOL_REQUESTS:]
+			all_types = (FileType, *SUPPORTED_FILE_TYPES)
 			# Which files are missing EXIF data?
 			missing_exif_info_for_files = {
-				path
+				(path, fa)
 				for fa in head_files
 				for path in fa.as_full_file_paths()
-				for t in (FileType, *SUPPORTED_FILE_TYPES)
+				for t in all_types
 				if (
-					t.applies_to_any_suffix(PathArgument(path).as_filetypes())
+					t.applies_to_any_suffix(fa.as_filetypes())
 					and (
-						t.key() not in file_infos[fa.as_id()][1]
-						or not t.required_info_keys().issubset(
-							file_infos[fa.as_id()][1].get(t.key())
-							or {}
+						"hard" in self.options
+						or (
+							t.key() not in file_infos[fa.as_id()][1]
+							or not t.required_info_keys().issubset(
+								file_infos[fa.as_id()][1].get(t.key())
+								or {}
+							)
 						)
 					)
 				)
 			}
+			if missing_exif_info_for_files:
+				missing_exif_info_for_paths, missing_exif_info_for_fargs = zip(*missing_exif_info_for_files)
+			else:
+				missing_exif_info_for_paths, missing_exif_info_for_fargs = (), ()
 			# Get the missing EXIF data.
 			for attempt in range(MAX_EXIFTOOL_ATTEMPTS):
 				try:
-					results = get_metadata(missing_exif_info_for_files)
+					results = get_metadata(missing_exif_info_for_paths)
 					break
 				except Exception as e:
 					stderr.write(f"{str(e)}")
 					stderr.write(" ".join([
 						path
-						for fa in missing_exif_info_for_files
-						for path in fa.as_full_file_paths()
+						for path in missing_exif_info_for_paths
 					]) + "\n")
 					stderr.write(f"exiftool failure on attempt {attempt}\n")
-			for result in results:
-				fa = PathArgument(result["SourceFile"])
-				print(str(fa))
+			for fa, result in zip(missing_exif_info_for_fargs, results):
 				for t in (FileType, *SUPPORTED_FILE_TYPES):
 					if t.applies_to_any_suffix(fa.as_filetypes()):
 						for nk in t.non_keys():
@@ -218,8 +225,16 @@ class Parse(Action):
 						modified.add(fa.as_id())
 					elif "text" not in file_info[k]:
 						file_info[k]["text"] = t.to_text(fa)
-						modified.add(fa.as_id)
+						modified.add(fa.as_id())
+			if "original-path" not in file_info:
+				file_info["original-path"] = list(fa.as_full_file_paths())[0]
+				modified.add(fa.as_id())
 		for id, (fa, file_info) in file_infos.items():
 			if id in modified:
 				with open(fa.as_full_metadata_path(), "w") as f:
 					JSON.dump(file_info, f)
+		for fa in path_arguments:
+			rename(
+				list(fa.as_full_file_paths())[0],
+				fa.as_full_file_destination(),
+			)

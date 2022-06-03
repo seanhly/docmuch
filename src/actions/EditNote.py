@@ -1,3 +1,4 @@
+import os
 from actions.Action import Action
 from os.path import exists
 import subprocess
@@ -33,4 +34,11 @@ class EditNote(Action):
 			subprocess.call(
 				["/usr/bin/xdg-open", note_path],
 				stderr=subprocess.DEVNULL
+			)
+			arguments = ["nohup", "/usr/bin/vim", note_path, "&"]
+			subprocess.Popen(
+				" ".join(arguments),
+				stderr=subprocess.DEVNULL,
+				shell=True,
+				preexec_fn=os.setpgrp
 			)

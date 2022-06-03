@@ -11,13 +11,22 @@ class TagArgument(Argument):
 	# The name of the tag.
 	name: str
 
-	def __init__(self, argument: Optional[str] = None, _ = None) -> None:
-		if argument:
-			self.polarity = argument[0] == "+"
-			self.name = argument[1:]
+	def __init__(self, name: Optional[str] = None, polarity: Optional[bool] = None) -> None:
+		if polarity is not None:
+			self.polarity = polarity
+			self.name = name
+		elif name[0] == "+":
+			self.polarity = True
+			self.name = name
+		elif name[0] == "-":
+			self.polarity = False
+			self.name = name
+		else:
+			self.polarity = True
+			self.name = name
 
 	def __str__(self) -> str:
-		return self.argument
+		return self.name
 
 	def parse_argument_for_action(self, arguments, current_index, action: Action):
 		if action.command() == "tag" and current_index == 0:
@@ -31,7 +40,7 @@ class TagArgument(Argument):
 			arguments.insert
 			current_index.arguments
 			action.query_parts.append("NOT")
-			next_index = OtherArgument(self.argument).parse_argument_for_action(arguments, current_index, action)
+			next_index = OtherArgument(self.name).parse_argument_for_action(arguments, current_index, action)
 		return next_index
 
 	@classmethod

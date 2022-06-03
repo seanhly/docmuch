@@ -1,6 +1,4 @@
 from actions.Action import Action
-from actions.Parse import get_metadata
-import json
 
 
 class CopyID(Action):
@@ -29,4 +27,16 @@ class CopyID(Action):
 		return []
 	
 	def execute(self) -> None:
-		pass
+		import subprocess
+		for source in (
+			"buffer-cut",
+			"clipboard",
+			"primary",
+			"secondary",
+		):
+			xclip_arguments = ["/usr/bin/xclip", "-selection", source]
+			xclip = subprocess.Popen(xclip_arguments, stdin=subprocess.PIPE)
+			for fa in self.file_arguments:
+				xclip.stdin.write(bytes(f"{fa.as_id()}\n", encoding="utf8"))
+			xclip.stdin.close()
+			xclip.wait()

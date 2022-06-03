@@ -27,32 +27,6 @@ class IDWithFiletypeArgument(FileLikeArgument):
 		)
 		return {realpath(path) if exists(path) else path}
 
-	def as_full_metadata_path(self):
-		path = join(
-			environ.get("HOME"),
-			"Documents",
-			"FileInfo",
-			f"{self.id}.json"
-		)
-		return realpath(path) if exists(path) else path
-
-	def as_full_annotations_path(self):
-		path = join(
-			environ.get("HOME"),
-			"Documents",
-			"FileAnnotations",
-			f"{self.id}.json"
-		)
-		return realpath(path) if exists(path) else path
-
-	def as_full_file_note_path(self):
-		notes_dir = realpath(join(
-			environ.get("HOME"),
-			"Documents",
-			"Notes",
-		))
-		return join(notes_dir, f"{self.id}.MD")
-
 	def as_id(self):
 		return self.id
 

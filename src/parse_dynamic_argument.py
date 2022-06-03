@@ -19,6 +19,5 @@ def parse_dynamic_argument(argument: str, action: str):
 	]
 	for T in argument_types:
 		if T.fits(argument):
-			print(T)
 			return T(argument, action)
 	return None

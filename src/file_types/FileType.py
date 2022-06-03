@@ -67,6 +67,7 @@ class FileType(ABC):
 		from actions.CopyAuthors import CopyAuthors
 		from actions.Untag import Untag
 		from actions.Index import Index
+		from actions.Parse import Parse
 		return [
 			Open,
 			Tag,
@@ -78,26 +79,22 @@ class FileType(ABC):
 			CopyAuthors,
 			Untag,
 			Index,
+			Parse,
 		]
 	
 	@classmethod
 	def for_suffix(cls, suffix: str):
-		from file_types.BIB import BIB
-		from file_types.EBook import EBook
-		from file_types.FileType import FileType
-		from file_types.Image import Image
-		from file_types.ODT import ODT
-		from file_types.PDF import PDF
-		from file_types.Plaintext import Plaintext
-		from file_types.Recipe import Recipe
-		from file_types.Song import Song
-		from file_types.TEX import TEX
-		all_filetypes = (
-			BIB, EBook, FileType, Image, ODT, PDF, Plaintext, Recipe, Song, TEX,
-		)
-		for ft in all_filetypes:
+		for ft in FileType.__subclasses__():
 			for suffix in ft.suffixes():
 				if suffix == suffix:
 					return ft
 
 		return None
+
+	@classmethod
+	def valid_suffix_pattern(cls):
+		return "\.(?=(?=" + "$|".join([
+			suffix
+			for ft in FileType.__subclasses__()
+			for suffix in ft.suffixes()
+		]) + "$))"

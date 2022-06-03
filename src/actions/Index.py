@@ -1,17 +1,21 @@
 from os import environ, listdir
 from os.path import exists, join
+from actions.Parse import Parse
 from constants import (
 	DB_PATH,
 	DISCARD_KEY_PATHS_PRE_DATA_STORE,
 	INDEX_SOURCE_WEIGHTS
 )
 from arguments.IDArgument import IDArgument
+from arguments.PathArgument import PathArgument
+from file_types.FileType import FileType
 from third_party_modules import xapian
 from urllib import request as request
 from JSON import JSON
 from typing import Dict, List
 from PreIndexFunctions import PreIndexFunctions
 from actions.Action import Action
+import re
 
 
 class Index(Action):
@@ -38,7 +42,7 @@ class Index(Action):
 	def execute(self) -> None:
 		if "all" in self.options:
 			self.file_arguments = [
-				IDArgument(f.split(".", 1)[0])
+				IDArgument(f.split(".")[0])
 				for f in listdir(join(environ['HOME'], "Documents", "Files"))
 			]
 		index_source_metadata: Dict[str, List[List[str]]] = {}
@@ -47,6 +51,13 @@ class Index(Action):
 		db = xapian.WritableDatabase(DB_PATH, xapian.DB_CREATE_OR_OPEN)
 		term_generator = xapian.TermGenerator()
 		term_generator.set_stemmer(xapian.Stem("en"))
+		path_arguments: List[PathArgument] = []
+		# Parse and move any documents that are not already organised.
+		for fa in self.file_arguments:
+			if type(fa) == PathArgument:
+				fa.movable = True
+				path_arguments.append(fa)
+		Parse(path_arguments).execute()
 		for fa in self.file_arguments:
 			file_info_path = fa.as_full_metadata_path()
 			file_annotations_path = fa.as_full_annotations_path()
