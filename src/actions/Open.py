@@ -2,6 +2,8 @@ from actions.Action import Action
 from os.path import exists
 import subprocess
 import os
+from file_types.FileType import FileType
+from arguments.PathArgument import PathArgument
 
 
 class Open(Action):
@@ -27,14 +29,21 @@ class Open(Action):
 	
 	def execute(self) -> None:
 		for fa in self.file_arguments:
-			file_paths = fa.as_full_file_paths()
-			for path in file_paths:
-				print(path)
-				if exists(path):
-					arguments = ["nohup", "/usr/bin/xdg-open", path, "&"]
-					subprocess.Popen(
-						" ".join(arguments),
-						stderr=subprocess.DEVNULL,
-						shell=True,
-                 		preexec_fn=os.setpgrp
-					)
+			for path in fa.as_full_file_paths():
+				inner_fa = PathArgument(path, action=self.command())
+				for t in FileType.__subclasses__():
+					if t.applies_to_fa(inner_fa):
+						view_path = t.view_path(inner_fa)
+						print(inner_fa, t, view_path)
+						subprocess.Popen(
+							" ".join([
+								"nohup",
+								"/usr/bin/xdg-open",
+								view_path,
+								"&",
+							]),
+							stderr=subprocess.DEVNULL,
+							stdout=subprocess.DEVNULL,
+							shell=True,
+                 			preexec_fn=os.setpgrp
+						)

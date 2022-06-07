@@ -1,12 +1,11 @@
-import re
-import subprocess
-from file_types.FileType import FileType
-from third_party_modules import dateparser, grobid_tei_xml
-from os.path import exists
-from urllib import request as request
-import subprocess
 from PreIndexFunctions import PreIndexFunctions
 from constants import PDFINFO_CMD
+from file_types.FileType import FileType
+from os.path import exists
+from third_party_modules import dateparser, grobid_tei_xml
+from urllib import request as request
+import re
+import subprocess
 
 
 class PDF(FileType):

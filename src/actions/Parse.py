@@ -120,6 +120,7 @@ class Parse(Action):
 		modified: Set[str] = set()
 		# Enhance the metadata for each file, adding custom data from external
 		# annotation programs.
+		print("PRE PROCESS")
 		for file_id, (fa, file_info) in file_infos.items():
 			# Which file types does this file categorise under?
 			for t in SUPPORTED_FILE_TYPES:
@@ -149,8 +150,10 @@ class Parse(Action):
 						# --- HEAVY PROCESSING FROM EXTERNAL PROGRAM HAPPENS BELOW ---
 						file_info[t.key()] = t.get_info(fa)
 						modified.add(file_id)
+		print("POST PROCESS")
 		head_files: List[FileLikeArgument] = []
 		tail_files: List[FileLikeArgument] = self.file_arguments
+		MAX_SIMULTANEOUS_EXIFTOOL_REQUESTS = 10
 		while tail_files:
 			head_files = tail_files[:MAX_SIMULTANEOUS_EXIFTOOL_REQUESTS]
 			tail_files = tail_files[MAX_SIMULTANEOUS_EXIFTOOL_REQUESTS:]
@@ -179,6 +182,9 @@ class Parse(Action):
 				missing_exif_info_for_paths, missing_exif_info_for_fargs = zip(*missing_exif_info_for_files)
 			else:
 				missing_exif_info_for_paths, missing_exif_info_for_fargs = (), ()
+			for path in missing_exif_info_for_paths:
+				print(path)
+			print("----")
 			# Get the missing EXIF data.
 			for attempt in range(MAX_EXIFTOOL_ATTEMPTS):
 				try:
@@ -214,7 +220,9 @@ class Parse(Action):
 						else:
 							file_infos[fa.as_id()][1][t.key()] = info
 							modified.add(fa.as_id())
+			print("EXIF DONE.")
 		for id, (fa, file_info) in file_infos.items():
+			print("get text", id)
 			for t in TEXTUAL_FILE_TYPES:
 				k = t.key()
 				if t.suffixes() and t.applies_to_any_suffix(fa.as_filetypes()):
@@ -229,6 +237,7 @@ class Parse(Action):
 			if "original-path" not in file_info:
 				file_info["original-path"] = list(fa.as_full_file_paths())[0]
 				modified.add(fa.as_id())
+		print("TEXT DONE.")
 		for id, (fa, file_info) in file_infos.items():
 			if id in modified:
 				with open(fa.as_full_metadata_path(), "w") as f:

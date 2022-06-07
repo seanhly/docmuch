@@ -7,6 +7,10 @@ class FileType(ABC):
 		return "file"
 
 	@classmethod
+	def view_path(cls, fa: "FileLikeArgument") -> str:
+		return fa.as_full_typed_file_path(cls)
+
+	@classmethod
 	def suffixes(cls) -> Set[str]:
 		return set()
 

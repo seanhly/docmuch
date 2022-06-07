@@ -200,6 +200,7 @@ class Search(Action):
 		return query, {}
 
 	def select_files(self, query, matching_files_and_weights: List[Tuple[float, FileLikeArgument]]):
+		import time
 		display_results = []
 		for weight, fa in reversed(matching_files_and_weights):
 			with open(fa.as_full_metadata_path(), "r") as f:

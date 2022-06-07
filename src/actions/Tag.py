@@ -1,4 +1,4 @@
-from os.path import realpath, join
+from os.path import realpath, join, exists
 import subprocess
 from os import environ, listdir
 from typing import Dict
@@ -7,6 +7,8 @@ from actions.Action import Action
 from actions.Index import Index
 from os.path import exists
 from urllib import request as request
+from arguments.OptionArgument import OptionArgument
+import sys
 
 
 class Tag(Action):
@@ -51,13 +53,18 @@ class Tag(Action):
 				j = JSON.load(f)
 				for t in j.get("tags", []):
 					tags[t] = tags.get(t, 0) + 1
-		with open(tags_path, "r") as f:
-			described_tags = dict(
-				[
-					l.strip().split("\t")
-					for l in f.read().strip().split("\n")
-				]
-			)
+		if exists(tags_path):
+			with open(tags_path, "r") as f:
+				described_tags = dict(
+					[
+						l.strip().split("\t")
+						for l in f.read().strip().split("\n")
+					]
+				)
+		else:
+			with open(tags_path, "w") as f:
+				f.write("tag\tThe tag's description\n")
+			described_tags = {}
 		tags_by_counts = sorted([
 			"\t".join(
 				str(i)
@@ -86,7 +93,7 @@ class Tag(Action):
 		if len(selection) == 2:
 			tag = selection[-1].strip().split("\t")[1]
 		else:
-			tag = selection[-1].strip()
+			tag = selection[-1].strip().split("\t")[-1]
 		
 		return tag
 	
@@ -118,7 +125,7 @@ class Tag(Action):
 					JSON.dump(file_annotations, f)
 				if modified:
 					print(fa.as_id())
-			Index(self.file_arguments).execute()
+			Index([*self.file_arguments, OptionArgument("--soft")]).execute()
 		else:
 			raise ValueError("""
 				Tagging things by search is not yet supported, because Seán

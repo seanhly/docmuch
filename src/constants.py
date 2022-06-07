@@ -10,6 +10,7 @@ DB_PATH = join(DOCUMENTS_PATH, "Index")
 FILES_PATH = join(DOCUMENTS_PATH, "Files")
 FILE_INFO_PATH = join(DOCUMENTS_PATH, "FileInfo")
 FILE_ANNOTATIONS_PATH = join(DOCUMENTS_PATH, "FileAnnotations")
+FILE_NOTES_PATH = join(DOCUMENTS_PATH, "Notes")
 SEARCH_LOG_PATH = join(DOCUMENTS_PATH, "search_log.tsv")
 for f in (DB_PATH, FILES_PATH, FILE_INFO_PATH):
 	if not exists(f):
@@ -120,3 +121,4 @@ CROSSED = "\033[9m"
 END = "\033[0m"
 
 RECENT_FILE_SEARCH_MAX_ITEMS = 130
+

@@ -1,10 +1,19 @@
 from abc import abstractmethod
 from os import environ, listdir
-from typing import Set, Type
+from typing import Set, Type, Dict
 from arguments.Argument import Argument
 from os.path import basename, join, realpath
 import re
 from file_types.FileType import FileType
+from constants import (
+	FILE_INFO_PATH,
+	FILE_ANNOTATIONS_PATH,
+	FILE_NOTES_PATH,
+	FILES_PATH
+)
+
+
+id_trie = {}
 
 
 class FileLikeArgument(Argument):
@@ -20,30 +29,13 @@ class FileLikeArgument(Argument):
 		)
 
 	def as_full_metadata_path(self) -> str:
-		metadata_dir = realpath(join(
-			environ.get("HOME"),
-			"Documents",
-			"FileInfo",
-		))
-
-		return join(metadata_dir, f"{self.as_id()}.json")
+		return join(FILE_INFO_PATH, f"{self.as_id()}.json")
 	
 	def as_full_annotations_path(self):
-		annotations_dir = realpath(join(
-			environ.get("HOME"),
-			"Documents",
-			"FileAnnotations",
-		))
-
-		return join(annotations_dir, f"{self.as_id()}.json")
+		return join(FILE_ANNOTATIONS_PATH, f"{self.as_id()}.json")
 	
 	def as_full_file_note_path(self):
-		notes_dir = realpath(join(
-			environ.get("HOME"),
-			"Documents",
-			"Notes",
-		))
-		return join(notes_dir, f"{self.as_id()}.MD")
+		return join(FILE_NOTES_PATH, f"{self.as_id()}.MD")
 
 	@abstractmethod
 	def as_id(self):
@@ -66,22 +58,45 @@ class FileLikeArgument(Argument):
 		return filetypes
 
 	def shortest_id_prefix(self):
-		files_dir = realpath(join(
-			environ.get("HOME"),
-			"Documents",
-			"Files",
-		))
 		the_id = self.as_id()
 		shortest_prefix_length = 0
 		from arguments.IDWithFiletypeArgument import IDWithFiletypeArgument
-		for f in listdir(files_dir):
-			if IDWithFiletypeArgument.fits(f):
-				other_id = f.split(".")[0]
-				if the_id != other_id:
-					prefix_overlap = 0
-					while other_id[prefix_overlap] == the_id[prefix_overlap]:
-						prefix_overlap += 1
-					if prefix_overlap >= shortest_prefix_length:
-						shortest_prefix_length = prefix_overlap + 1
+		global id_trie
+		if not id_trie:
+			j = 0
+			for file_name in listdir(FILES_PATH):
+				j += 1
+				file_id = file_name.split(".")[0]
+				i = 0
+				prefix = []
+				trie = id_trie
+				inserted = False
+				while not inserted:
+					if file_id[i] in trie:
+						leaf = trie[file_id[i]]
+						if type(leaf) == str:
+							next_trie = {}
+							trie[file_id[i]] = next_trie
+							j = i
+							while leaf[i - j] == file_id[i + 1]:
+								d = {}
+								next_trie[file_id[i + 1]] = d
+								next_trie = d
+								i += 1
+							next_trie[leaf[i - j]] = leaf[i - j + 1:]
+							next_trie[file_id[i + 1]] = file_id[i + 2:]
+							inserted = True
+						else:
+							trie = leaf
+							i += 1
+					else:
+						trie[file_id[i]] = file_id[i + 1:]
+						inserted = True
+		trie = id_trie
+		shortest_prefix_length = 0
+		the_id = self.as_id()
+		while type(trie) != str:
+			trie = trie[the_id[shortest_prefix_length]]
+			shortest_prefix_length += 1
 
 		return the_id[:shortest_prefix_length]

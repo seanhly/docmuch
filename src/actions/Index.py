@@ -28,7 +28,7 @@ class Index(Action):
 		return "index the file"
 
 	def recognised_options(self):
-		return {"all"}
+		return {"all", "soft"}
 
 	def arg_options(self):
 		return set()
@@ -57,8 +57,10 @@ class Index(Action):
 			if type(fa) == PathArgument:
 				fa.movable = True
 				path_arguments.append(fa)
-		Parse(path_arguments).execute()
+		if "soft" not in self.options:
+			Parse(path_arguments).execute()
 		for fa in self.file_arguments:
+			print("Indexing", str(fa))
 			file_info_path = fa.as_full_metadata_path()
 			file_annotations_path = fa.as_full_annotations_path()
 			with open(file_info_path, "r") as f:
