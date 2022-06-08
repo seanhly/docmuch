@@ -2,19 +2,18 @@ from file_types.FileType import FileType
 from typing import Set
 
 
-class Plaintext(FileType):
+class HTML(FileType):
 	@classmethod
 	def to_text(cls, fa):
-		with open(fa.as_full_typed_file_path(cls), "r") as f:
-			return f.read()
+		return None
 
 	@classmethod
 	def key(cls):
-		return "plaintext"
+		return "html"
 
 	@classmethod
 	def suffixes(cls) -> Set[str]:
-		return {"TXT", "MD", "ORG"}
+		return {"HTML", "HTM", "XHTML"}
 
 	@classmethod
 	def required_exif_mappings(cls):
@@ -32,7 +31,3 @@ class Plaintext(FileType):
 	@classmethod
 	def required_fields(cls):
 		return set()
-
-	@classmethod
-	def view_cmd(cls) -> str:
-		return "/usr/bin/lxterminal -e /usr/bin/vim"

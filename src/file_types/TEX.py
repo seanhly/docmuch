@@ -44,3 +44,7 @@ class TEX(FileType):
 	@classmethod
 	def suffixes(cls):
 		return {"TEX"}
+
+	@classmethod
+	def view_cmd(cls) -> str:
+		return "/usr/bin/lxterminal -e /usr/bin/vim"

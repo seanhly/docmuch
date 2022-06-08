@@ -1,4 +1,4 @@
-from arguments.FileLikeArgument import FileLikeArgument
+from arguments.FileLikeArgument import FileLikeArgument, VALID_FILE_NAME
 from os.path import join, exists, realpath
 from os import listdir
 from constants import FILES_PATH
@@ -23,8 +23,9 @@ class IDArgument(FileLikeArgument):
 		if not id_index:
 			id_index = {}
 			for f in listdir(FILES_PATH):
-				id, suffix = f.split(".")
-				id_index[id] = id_index.get(id, []) + [suffix]
+				if re.match(VALID_FILE_NAME, f):
+					id, suffix = f.split(".")
+					id_index[id] = id_index.get(id, []) + [suffix]
 		return {
 			join(FILES_PATH, f"{self.as_id()}.{suffix}")
 			for suffix in id_index[self.as_id()]

@@ -33,15 +33,15 @@ class Open(Action):
 				inner_fa = PathArgument(path, action=self.command())
 				for t in FileType.__subclasses__():
 					if t.applies_to_fa(inner_fa):
-						view_path = t.view_path(inner_fa)
-						print(inner_fa, t, view_path)
+						program = " ".join([
+							"nohup",
+							t.view_cmd(),
+							t.view_path(inner_fa),
+							"&",
+						])
+						print(program)
 						subprocess.Popen(
-							" ".join([
-								"nohup",
-								"/usr/bin/xdg-open",
-								view_path,
-								"&",
-							]),
+							program,
 							stderr=subprocess.DEVNULL,
 							stdout=subprocess.DEVNULL,
 							shell=True,

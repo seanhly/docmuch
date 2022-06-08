@@ -15,6 +15,7 @@ from file_types.Plaintext import Plaintext
 from file_types.Recipe import Recipe
 from file_types.Song import Song
 from file_types.TEX import TEX
+from file_types.HTML import HTML
 from os.path import exists
 from sys import stderr
 from typing import Any, Dict, Tuple, Type, List, Set
@@ -36,6 +37,7 @@ SUPPORTED_FILE_TYPES: Tuple[Type[FileType]] = (
 	Recipe,
 	Song,
 	TEX,
+	HTML,
 )
 TEXTUAL_FILE_TYPES: Tuple[Type[FileType]] = (
 	EBook,
@@ -153,7 +155,6 @@ class Parse(Action):
 		print("POST PROCESS")
 		head_files: List[FileLikeArgument] = []
 		tail_files: List[FileLikeArgument] = self.file_arguments
-		MAX_SIMULTANEOUS_EXIFTOOL_REQUESTS = 10
 		while tail_files:
 			head_files = tail_files[:MAX_SIMULTANEOUS_EXIFTOOL_REQUESTS]
 			tail_files = tail_files[MAX_SIMULTANEOUS_EXIFTOOL_REQUESTS:]

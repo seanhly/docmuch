@@ -15,7 +15,6 @@ from constants import (
 	RECENT_FILE_SEARCH_MAX_ITEMS,
 	RED,
 	SEARCH_LOG_PATH,
-	WHITE,
 	YELLOW,
 	LIGHT_CYAN,
 )
@@ -303,26 +302,25 @@ class Search(Action):
 			tags =annotations.get('tags', [])
 			if tags:
 				result +=  f"{LIGHT_CYAN}({' '.join(tags)}){END} "
-			result += f"{WHITE}{title}{END}"
+			result += f"{END}{title}"
 			display_results.append(result)
-		with open("/tmp/log", "w") as f:
-			fzf_search = subprocess.Popen(
-				[
-					"fzf",
-					"--print-query",
-					"--multi",
-					"--exact",
-					"--no-mouse",
-					"--ansi",
-				],
-				stdin=subprocess.PIPE,
-				stdout=subprocess.PIPE,
-			)
-			for r in display_results:
-				fzf_search.stdin.write(bytes(f"{r}\n", encoding="utf8"))
-			fzf_search.stdin.close()
-			fzf_search.wait()
-			fzf_output = fzf_search.stdout.read().decode("utf8").split("\n", 1)
+		fzf_search = subprocess.Popen(
+			[
+				"fzf",
+				"--print-query",
+				"--multi",
+				"--exact",
+				"--no-mouse",
+				"--ansi",
+			],
+			stdin=subprocess.PIPE,
+			stdout=subprocess.PIPE,
+		)
+		for r in display_results:
+			fzf_search.stdin.write(bytes(f"{r}\n", encoding="utf8"))
+		fzf_search.stdin.close()
+		fzf_search.wait()
+		fzf_output = fzf_search.stdout.read().decode("utf8").split("\n", 1)
 		if len(fzf_output) == 2:
 			potential_next_query, selected_lines_str = fzf_output
 			if potential_next_query:

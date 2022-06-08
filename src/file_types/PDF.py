@@ -208,3 +208,7 @@ class PDF(FileType):
 	@classmethod
 	def suffixes(cls):
 		return {"PDF"}
+
+	@classmethod
+	def view_cmd(cls) -> str:
+		return "/usr/bin/zathura"

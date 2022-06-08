@@ -1,8 +1,8 @@
 from abc import abstractmethod
-from os import environ, listdir
-from typing import Set, Type, Dict
+from os import listdir
+from typing import Set, Type, Set
 from arguments.Argument import Argument
-from os.path import basename, join, realpath
+from os.path import basename, join
 import re
 from file_types.FileType import FileType
 from constants import (
@@ -11,6 +11,9 @@ from constants import (
 	FILE_NOTES_PATH,
 	FILES_PATH
 )
+
+
+VALID_FILE_NAME = "[0-9a-f]{40}" + FileType.valid_suffix_pattern()
 
 
 id_trie = {}
@@ -60,15 +63,18 @@ class FileLikeArgument(Argument):
 	def shortest_id_prefix(self):
 		the_id = self.as_id()
 		shortest_prefix_length = 0
-		from arguments.IDWithFiletypeArgument import IDWithFiletypeArgument
 		global id_trie
 		if not id_trie:
 			j = 0
-			for file_name in listdir(FILES_PATH):
+			directory_files = listdir(FILES_PATH)
+			file_ids = {
+				f.split(".")[0]
+				for f in directory_files
+				if re.match(VALID_FILE_NAME, f)
+			}
+			for file_id in file_ids:
 				j += 1
-				file_id = file_name.split(".")[0]
 				i = 0
-				prefix = []
 				trie = id_trie
 				inserted = False
 				while not inserted:

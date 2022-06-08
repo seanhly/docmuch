@@ -11,6 +11,10 @@ class FileType(ABC):
 		return fa.as_full_typed_file_path(cls)
 
 	@classmethod
+	def view_cmd(cls) -> str:
+		return "/usr/bin/xdg-open"
+
+	@classmethod
 	def suffixes(cls) -> Set[str]:
 		return set()
 
@@ -97,6 +101,16 @@ class FileType(ABC):
 
 	@classmethod
 	def valid_suffix_pattern(cls):
+		from file_types.BIB import BIB
+		from file_types.EBook import EBook
+		from file_types.Image import Image
+		from file_types.ODT import ODT
+		from file_types.PDF import PDF
+		from file_types.Plaintext import Plaintext
+		from file_types.Recipe import Recipe
+		from file_types.Song import Song
+		from file_types.TEX import TEX
+		from file_types.HTML import HTML
 		return "\.(?=(?=" + "$|".join([
 			suffix
 			for ft in FileType.__subclasses__()

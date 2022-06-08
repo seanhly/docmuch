@@ -89,3 +89,7 @@ class Recipe(FileType):
 	@classmethod
 	def suffixes(cls):
 		return {"RECIPE"}
+
+	@classmethod
+	def view_cmd(cls) -> str:
+		return "/usr/bin/dillo -f"
