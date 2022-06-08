@@ -26,4 +26,4 @@ class Song(FileType):
 
 	@classmethod
 	def suffixes(cls):
-		return {"OGG"}
+		return {"OGG", "FLAC"}
